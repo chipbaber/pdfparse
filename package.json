@@ -1,0 +1,25 @@
+{
+  "name": "pdfparse",
+  "version": "1.0.0",
+  "description": "Notes on steps to get code to run.",
+  "main": "index.js", 
+  "type":"module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chipbaber/pdfparse.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chipbaber/pdfparse/issues"
+  },
+  "homepage": "https://github.com/chipbaber/pdfparse#readme",
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "pdf-lib": "^1.17.1"
+  }
+}
