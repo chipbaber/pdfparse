@@ -19636,25 +19636,16 @@ var PDFButton = (
 var PDFButton_default = PDFButton;
 
 // index.js
-async function createPDFInJavaScript() {
-  const pdfDoc = await PDFDocument_default.create();
-  const timesRoman = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-  const page = pdfDoc.addPage();
-  const { _, height } = page.getSize();
-  const fontSize = 30;
-  page.drawText("created by MLE/JavaScript", {
-    x: 50,
-    y: height - 4 * fontSize,
-    size: 30,
-    font: timesRoman,
-    color: rgb(0, 0.53, 0.71)
-  });
-  const pdfBytes = await pdfDoc.save();
-  console.log("Page Count:" + pdfDoc.getPageCount());
+async function pdfPageCount(pdf) {
+  try {
+    const pdfIn = await PDFDocument_default.load(pdf);
+    return pdfIn.getPageCount();
+  } catch (err) {
+    console.log("Error inside pdfPageCount" + err);
+  }
 }
-createPDFInJavaScript();
 export {
-  createPDFInJavaScript
+  pdfPageCount
 };
 /*! Bundled license information:
 
