@@ -19636,16 +19636,56 @@ var PDFButton = (
 var PDFButton_default = PDFButton;
 
 // index.js
-async function pdfPageCount(pdf) {
+async function pdfPageCount(base64In) {
   try {
-    const pdfIn = await PDFDocument_default.load(pdf);
-    return pdfIn.getPageCount();
+    globalThis.setTimeout = (functionRef, delay, ...args) => {
+      functionRef.apply(null, args);
+    };
+    const dataUri = "data:application/pdf;base64," + base64In;
+    const pdfIn = await PDFDocument_default.load(dataUri, 100);
+    console.log("Document Loaded successfully.");
+    return await pdfIn.getPageCount();
   } catch (err) {
     console.log("Error inside pdfPageCount" + err);
   }
 }
+async function pdfPageCountUnit8Array(pdfIn) {
+  try {
+    globalThis.setTimeout = (functionRef, delay, ...args) => {
+      functionRef.apply(null, args);
+    };
+    const pdfDoc = await PDFDocument_default.load(pdfIn);
+    const pages = pdfDoc.getPageCount();
+    return pages;
+  } catch (err) {
+    console.log("Error inside pdfPageCountUnit8Array" + err);
+  }
+}
+async function extractPage(pdfIn, pageNumber) {
+  try {
+    globalThis.setTimeout = (functionRef, delay, ...args) => {
+      functionRef.apply(null, args);
+    };
+    const pdfDoc = await PDFDocument_default.load(pdfIn);
+    const pages = pdfDoc.getPageCount();
+    const arr = [];
+    arr.push(pageNumber);
+    if (pageNumber >= 0 && pageNumber <= pages) {
+      const newPdfDoc = await PDFDocument_default.create();
+      const [currentPage] = await newPdfDoc.copyPages(pdfDoc, arr);
+      newPdfDoc.addPage(currentPage);
+      return newPdfDoc;
+    } else {
+      throw new Error("Page number " + pageNumber + " not in range of document size. Current document has " + pages + " pages.");
+    }
+  } catch (err) {
+    console.log("Error inside getPage" + err);
+  }
+}
 export {
-  pdfPageCount
+  extractPage,
+  pdfPageCount,
+  pdfPageCountUnit8Array
 };
 /*! Bundled license information:
 

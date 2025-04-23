@@ -38,13 +38,16 @@ catch (err) {
 */
 //splitPDFIntoPages('./input/2019_JAMA_Egg-risk.pdf');
 
+//inputbase 64 and get page  count
 export async function pdfPageCount(base64In) {
   try {
-    console.log('Initializing Page Count');
+   // console.log('Initializing Page Count');
+    //This line is a polyfill for execution in the database on larger base64 arrays
+    globalThis.setTimeout = (functionRef, delay, ...args) => {functionRef.apply(null, args);}
     const dataUri = 'data:application/pdf;base64,' + base64In;
-    const pdfIn = await PDFDocument.load(dataUri);
-   // console.log('Initial Page Count:'+pdfIn.getPageCount());
-    return pdfIn.getPageCount();
+    const pdfIn = await PDFDocument.load(dataUri, 100);
+   console.log('Document Loaded successfully.');
+    return await pdfIn.getPageCount();
   }
   catch (err) {
     console.log('Error inside pdfPageCount'+ err); 
@@ -52,8 +55,9 @@ export async function pdfPageCount(base64In) {
 }
 
 
-//Testing
-console.log('Testing');
+//Test Casebase64
+/*
+console.log('Testing BAse64 encode');
 
 const base64 =
  'JVBERi0xLjcKJYGBgYEKCjUgMCBvYmoKPDwKL0ZpbHRlciAvRmxhdGVEZWNvZGUKL0xlbm' +
@@ -71,6 +75,79 @@ const base64 =
  'EBAEsCwz3vrvRmOOyyOoGhZdutHN2MT55fIAVocD+AplbmRzdHJlYW0KZW5kb2JqCgpzdG' +
  'FydHhyZWYKNTEwCiUlRU9G';
 
+
  const page_count = await pdfPageCount(base64);
  console.log('Total Pages is: '+ page_count);
+*/
+
+
+export async function pdfPageCountUnit8Array(pdfIn) {
+  try {
+  // console.log('Initializing Page CountPages input Uint8Array');
+  //This line is a polyfill for execution in the database on larger pdfs
+  globalThis.setTimeout = (functionRef, delay, ...args) => {functionRef.apply(null, args);}
+  /*Test Case local */
+   //const pdfIn = fs.readFileSync('./input/2023_Annals_Contraception.pdf');   
+    const pdfDoc = await PDFDocument.load(pdfIn);
+    const pages = pdfDoc.getPageCount();
+   // console.log("Document has " + pdfDoc.getPageCount());
+    return pages;
+  }
+  catch (err) {
+    console.log('Error inside pdfPageCountUnit8Array'+ err); 
+  }
+}
+
+/*Test Case for */ 
+//console.log('Base Test for pdfPageCountUnit8Array');
+//Load the original document
+//pdfPageCountUnit8Array('Test');
+
+export async function extractPage(pdfIn, pageNumber) {
+  try {
+   //console.log('Initializing getPage');
+   /*Test Case local 
+    const pdfIn = fs.readFileSync('./input/2023_Annals_Contraception.pdf');  
+   */
+
+   //This line is a polyfill for execution in the database on larger pdfs
+   globalThis.setTimeout = (functionRef, delay, ...args) => {functionRef.apply(null, args);}
+    const pdfDoc = await PDFDocument.load(pdfIn);
+    const pages = pdfDoc.getPageCount();
+    const arr = [];
+    arr.push(pageNumber);
+
+    //check to see if page in range of document
+    if (pageNumber >= 0 && pageNumber <= pages-1 ) {
+      //Create New PDF
+      const newPdfDoc = await PDFDocument.create();
+      //Copy the page
+      const [currentPage] = await newPdfDoc.copyPages(pdfDoc, arr)
+      //add copied page
+      newPdfDoc.addPage(currentPage);
+
+      /*Test Case local Code 
+      console.log('Initial Page Count:'+newPdfDoc.getPageCount());
+      // For local testing
+      fs.writeFileSync('./output/'+'pdf_page_'+pageNumber+'.pdf', await newPdfDoc.save()); 
+      console.log('Writing file: '+'./output/'+'pdf_page_'+pageNumber+'.pdf');
+       */
+       return newPdfDoc;
+    }
+    else {
+      throw new Error("Page number "+pageNumber+" not in range of document size. Current document has "+pages+" pages.");
+    }
+
+
+
+  }
+  catch (err) {
+    console.log('Error inside getPage'+ err); 
+  }
+}
+
+/*Test Case for */ 
+//console.log('Base Test for getPage');
+//Load the original document
+//extractPage('Test',5);
 
