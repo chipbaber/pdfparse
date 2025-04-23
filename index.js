@@ -132,7 +132,7 @@ export async function extractPage(pdfIn, pageNumber) {
       fs.writeFileSync('./output/'+'pdf_page_'+pageNumber+'.pdf', await newPdfDoc.save()); 
       console.log('Writing file: '+'./output/'+'pdf_page_'+pageNumber+'.pdf');
        */
-       return newPdfDoc;
+       return await newPdfDoc.save();
     }
     else {
       throw new Error("Page number "+pageNumber+" not in range of document size. Current document has "+pages+" pages.");

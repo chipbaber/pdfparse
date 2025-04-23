@@ -135,7 +135,7 @@ select * from documents
 ```
 ![](assets/2025-04-23-10-15-48.png)
 
--- Test your function by executing a javascript code block in SQL Worksheet. Make sure to set the language and environment variables like below. Be sure to modify the block below to add your id. This block will return the number of pages in a pdf. 
+-- Test your function by executing a javascript code block in SQL Worksheet that returns the total number of pages in a pdf. Make sure to set the language and environment variables like below. Be sure to modify the block below to add your id. This block will return the number of pages in a pdf. 
 ![](assets/2025-04-23-10-12-31.png)
  
 ```
@@ -163,18 +163,51 @@ catch (err) {
 ```
 
 
--- Building your function ex. 23ai typescript syntax
+- Next we will create a pl/sql function so we can easily call our javascript function from a query. 
 ```
 create or replace function  pdfPageCount(inPDF in blob) return number
 as mle module PDFLIB_MODULE env PDF_TRANSFORM signature 'pdfPageCountUnit8Array(Uint8Array)';
 ```
 
--- Leveraging function in a query
+- Lets run the query now to see the function execute inline. 
 ```
-select id, file_name, file_size, pdfPageCount(file_content) "Pages" from documents where id = 45;
+select id, file_name, file_size, pdfPageCount(file_content) "Pages" from documents;
 ```
 
--- Query with function
+- Now lets perform a little more complex example in which we will extract a single page from a pdf and save it as a separate document in our table. 
 ```
-select pdfPageCount(FILE_CONTENT) from documents;
+const {pdfPageCountUnit8Array} = await import('pdflib-module');
+const {extractPage} = await import('pdflib-module');
+const{oracledb} = await import ('mle-js-oracledb');
+
+try {
+//Lets query the document    
+const result = session.execute(
+    `SELECT ID, FILE_NAME, FILE_CONTENT FILE_CONTENT FROM DOCUMENTS where id = 3`,
+    [],{fetchInfo:{
+            ID: {type: oracledb.STRING},
+            FILE_NAME: {type: oracledb.STRING},
+            FILE_CONTENT :{type: oracledb.UINT8ARRAY}
+        },
+    outFormat: oracledb.OUT_FORMAT_OBJECT});
+const pageNum = 2;
+
+for (let row of result.rows) {
+    const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
+    console.log('ID: '+ row.ID + ' Filename: '+ row.FILE_NAME + ' Page Count: '+  pages);
+    //Parse out a page
+    const newPDF = await extractPage(row.FILE_CONTENT,pageNum);
+    const pages2 = await pdfPageCountUnit8Array(newPDF);
+    console.log('Extracted page 2. New pdf size is: ' + pages2);
+    //insert extracted doc into the documents table
+    const filename = "page_"+pageNum+"_in_"+row.FILE_NAME;
+     const size = newPDF.length;
+     
+    session.execute("insert into documents (file_name, file_size, file_type, file_content) values (:pdfname, :pdfsize,'application/pdf',:pdf)", [filename,size,newPDF] );
+}
+}
+catch (err) {
+    return err.errorNum + " " + err.message;
+}
 ```
+
