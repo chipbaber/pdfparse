@@ -174,7 +174,7 @@ as mle module PDFLIB_MODULE env PDF_TRANSFORM signature 'pdfPageCountUnit8Array(
 select id, file_name, file_size, pdfPageCount(file_content) "Pages" from documents;
 ```
 
-- Now lets perform a little more complex example in which we will extract a single page from a pdf and save it as a separate document in our table. 
+- Now lets perform a little more complex example in which we will extract a single page from a pdf and save it as a new document in our table. 
 ```
 const {pdfPageCountUnit8Array} = await import('pdflib-module');
 const {extractPage} = await import('pdflib-module');
@@ -211,3 +211,32 @@ catch (err) {
 }
 ```
 
+-- We can wrap this javascript function into a database function for easier access from pl/sql. 
+```
+create or replace function  extractPage(inPDF in blob, page in number) return blob
+as mle module PDFLIB_MODULE env PDF_TRANSFORM signature 'extractPage(Uint8Array,number)';
+```
+
+-- Execute function in simple query
+```
+select  pdfPageCount(extractPage(file_content,3)) "Extracted Document Page" from documents where id = 3;
+```
+
+-- Execute function to save page of document back to object storage. 
+```
+DECLARE
+      my_blob_data BLOB;
+      v_file_name varchar2(300);
+BEGIN 
+select SUBSTR(file_name,0,length(file_name)-4)||'_page_3.pdf', extractPage(file_content,3) into v_file_name, my_blob_data from documents where id = 3;
+DBMS_CLOUD.PUT_OBJECT(
+     credential_name => 'CHIPSPICKS',
+     object_uri => 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/id9ju5cntedk/b/vectorfiles/o/'||v_file_name,
+     contents => my_blob_data); 
+END;
+```
+
+-- Query to see if the one page of your document now exists in object storage
+```
+select * from dbms_cloud.list_objects('<your credential>','https://objectstorage.us-ashburn-1.oraclecloud.com/n/<namespace>/b/<bucketname>/o/') where object_name like '%.pdf'
+```
