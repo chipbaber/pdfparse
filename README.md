@@ -118,30 +118,31 @@ select * from documents
 ```
 ![](assets/2025-04-28-09-18-10.png)
 
-## Create your Node.js Code
+## Node.js Local Setup 
 Notes on steps to get code to run. 
 
--- Initialize json package
+- Install Node.js on your local machine. [https://nodejs.org/en/download](https://nodejs.org/en/download)
+
+-- Create a new folder. Create a package inside the folder. 
 ```
 npm init -y
 ```
+![](assets/2025-04-28-09-40-40.png)
 
-- List packages
+- Check to see if any packages installed
 ```
 npm list
 ```
+![](assets/2025-04-28-09-42-36.png)
 
-- Install libraries
+- Install pdf-lib libraries
 ```
 npm install pdf-lib
 ```
+![](assets/2025-04-28-09-43-35.png)
 
-- Add Type Node Module to the package.json
-```
-"type":"module",
-```
 
-- If you hit the error on installing then run:
+- (Optional) If you hit the error on installing then run:
 ```
 Get-ExecutionPolicy
 ```
@@ -156,7 +157,15 @@ RemoteSigned
 
 ![](assets/2025-03-24-10-16-00.png)
 
--- Create a index.js file
+- Add Type Node Module to the package.json
+```
+"type":"module",
+```
+![](assets/2025-04-28-09-20-15.png)
+
+- Create a new index.js file or copy over the index.js file from the git repo. [https://github.com/chipbaber/pdfparse/blob/main/index.js](https://github.com/chipbaber/pdfparse/blob/main/index.js)
+
+
 
 -- On local machine bundle up all the libraries required to execute the .js module. 
 ```
