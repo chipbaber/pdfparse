@@ -157,48 +157,82 @@ RemoteSigned
 
 ![](assets/2025-03-24-10-16-00.png)
 
-- Add Type Node Module to the package.json
+- Add an entry to the package.json that set the type to Module for the package.
 ```
 "type":"module",
 ```
 ![](assets/2025-04-28-09-20-15.png)
 
+
 - Create a new index.js file or copy over the index.js file from the git repo. [https://github.com/chipbaber/pdfparse/blob/main/index.js](https://github.com/chipbaber/pdfparse/blob/main/index.js)
 
 
+- We will now run a simple test case, to simulate local development. Uncomment the test casebase64.
+![](assets/2025-04-29-08-18-44.png)
 
--- On local machine bundle up all the libraries required to execute the .js module. 
+It should look like:
+![](assets/2025-04-29-08-20-48.png)
+
+- Run the test case locally. 
+```
+node index.js
+```
+You should see the following output. 
+![](assets/2025-04-29-08-21-52.png)
+
+- Recomment the test case. 
+![](assets/2025-04-29-08-18-44.png)
+
+
+- On local machine bundle up all the libraries required to execute the .js module. 
 ```
 npx esbuild index.js --bundle --outfile=./pdf-transform-bundle.js --format=esm
 ```
+![](assets/2025-04-29-08-25-44.png)
 
-- Inside APEX navigate to the object browser. Upload your bundle as a new module and name it PDFLIB_MODULE. 
+# Leveraging MLE with APEX in 23ai Autonomous Database
+
+- Login to your APEX workspace. 
+![](assets/2025-04-29-08-28-16.png)
+
+- Inside APEX navigate to the object browser. (SQL Workshop --> Object Browser). Right click on MLE Modules - Javascript and Create a new MLE Module.
 ![](assets/2025-04-23-10-03-02.png)
+
+- Upload the javascript bundle you just created as a new module and name it PDFLIB_MODULE. 
+```
+PDFLIB_MODULE
+```
+
 ![](assets/2025-04-23-10-03-55.png)
 
-- Create a MLE environment for your code base called PDF_TRANSFORM.
+- Right click on MLE Environments and Create a MLE environment for your code base called PDF_TRANSFORM.
+```
+PDF_TRANSFORM
+```
 ![](assets/2025-04-23-10-05-00.png)
 ![](assets/2025-04-23-10-07-17.png)
 
-- Add a import to your environment. 
+- Click Add Import and select the PDFLIB_MODULE module to be included in your environment. 
 ![](assets/2025-04-23-10-08-22.png)
 ![](assets/2025-04-23-10-09-01.png)
 
 
--- Open SQL Worksheet and Query to check mle_env is up and ready. 
-```
-SELECT ENV_NAME, LANGUAGE_OPTIONS FROM USER_MLE_ENVS WHERE ENV_NAME='PDF_TRANSFORM'
-```
-![](assets/2025-04-23-10-10-35.png)
+- Open SQL Worksheet and Query to check mle_env is up and ready. 
+    ```
+    SELECT ENV_NAME, LANGUAGE_OPTIONS FROM USER_MLE_ENVS WHERE ENV_NAME='PDF_TRANSFORM'
+    ```
+    ![](assets/2025-04-23-10-10-35.png)
 
 - Select all your documents and write down the ids for the next step. 
-```
-select * from documents
-```
-![](assets/2025-04-23-10-15-48.png)
 
--- Test your function by executing a javascript code block in SQL Worksheet that returns the total number of pages in a pdf. Make sure to set the language and environment variables like below. Be sure to modify the block below to add your id. This block will return the number of pages in a pdf. 
-![](assets/2025-04-23-10-12-31.png)
+    ```
+    select * from documents
+    ```
+
+    ![](assets/2025-04-23-10-15-48.png)
+
+- Test your function by executing a javascript code block in SQL Worksheet that returns the total number of pages in a pdf. Make sure to set the language and environment variables like below. Be sure to modify the block below to add your id. This block will return the number of pages in a pdf. 
+    ![](assets/2025-04-23-10-12-31.png)
  
 ```
 const {pdfPageCountUnit8Array} = await import('pdflib-module');
@@ -236,7 +270,7 @@ as mle module PDFLIB_MODULE env PDF_TRANSFORM signature 'pdfPageCountUnit8Array(
 select id, file_name, file_size, pdfPageCount(file_content) "Pages" from documents;
 ```
 
-- Now lets perform a little more complex example in which we will extract a single page from a pdf and save it as a new document in our table. 
+- Now lets perform a little more complex example in which we will extract a single page from a pdf and save it as a new document in our table. Remember to update your document id and the page number you wishe to extract. 
 ```
 const {pdfPageCountUnit8Array} = await import('pdflib-module');
 const {extractPage} = await import('pdflib-module');
@@ -245,14 +279,14 @@ const{oracledb} = await import ('mle-js-oracledb');
 try {
 //Lets query the document    
 const result = session.execute(
-    `SELECT ID, FILE_NAME, FILE_CONTENT FILE_CONTENT FROM DOCUMENTS where id = 3`,
+    `SELECT ID, FILE_NAME, FILE_CONTENT FILE_CONTENT FROM DOCUMENTS where id = <your document id>`,
     [],{fetchInfo:{
             ID: {type: oracledb.STRING},
             FILE_NAME: {type: oracledb.STRING},
             FILE_CONTENT :{type: oracledb.UINT8ARRAY}
         },
     outFormat: oracledb.OUT_FORMAT_OBJECT});
-const pageNum = 2;
+const pageNum = <page to extract>;
 
 for (let row of result.rows) {
     const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
@@ -260,7 +294,7 @@ for (let row of result.rows) {
     //Parse out a page
     const newPDF = await extractPage(row.FILE_CONTENT,pageNum);
     const pages2 = await pdfPageCountUnit8Array(newPDF);
-    console.log('Extracted page 2. New pdf size is: ' + pages2);
+    console.log('Extracted page '+pageNum  +'. New pdf size is: ' + pages2);
     //insert extracted doc into the documents table
     const filename = "page_"+pageNum+"_in_"+row.FILE_NAME;
      const size = newPDF.length;
@@ -272,19 +306,29 @@ catch (err) {
     return err.errorNum + " " + err.message;
 }
 ```
+You should see output like below. 
+![](assets/2025-04-29-14-12-01.png)
 
--- We can wrap this javascript function into a database function for easier access from pl/sql. 
-```
-create or replace function  extractPage(inPDF in blob, page in number) return blob
-as mle module PDFLIB_MODULE env PDF_TRANSFORM signature 'extractPage(Uint8Array,number)';
-```
+- Select all from you document table to verify that your page was extracted.
+    ```
+    select * from documents
+    ```
+    ![](assets/2025-04-29-14-15-31.png)
 
--- Execute function in simple query
-```
-select  pdfPageCount(extractPage(file_content,3)) "Extracted Document Page" from documents where id = 3;
-```
+- We can wrap this javascript function into a database function for easier access from pl/sql. 
+    ```
+    create or replace function  extractPage(inPDF in blob, page in number) return blob
+    as mle module PDFLIB_MODULE env PDF_TRANSFORM signature 'extractPage(Uint8Array,number)';
+    ```
+    ![](assets/2025-04-29-14-16-32.png)
 
--- Execute function to save page of document back to object storage. 
+-- Now we will execute our extract and count page functions in simple query together. 
+```
+select pdfPageCount(extractPage(file_content,3)) "Extracted Document Page" from documents where id = 3;
+```
+![](assets/2025-04-29-14-47-01.png)
+
+-- We can also execute the function to extract a page and save back to object storage. 
 ```
 DECLARE
       my_blob_data BLOB;
@@ -297,11 +341,15 @@ DBMS_CLOUD.PUT_OBJECT(
      contents => my_blob_data); 
 END;
 ```
+![](assets/2025-04-29-14-50-30.png)
 
--- Query to see if the one page of your document now exists in object storage
+
+-- Validate the page was inserted into object storage with the query below.
 ```
 select * from dbms_cloud.list_objects('<your credential>','https://objectstorage.us-ashburn-1.oraclecloud.com/n/<namespace>/b/<bucketname>/o/') where object_name like '%.pdf'
 ```
+![](assets/2025-04-29-14-52-53.png)
+
 
 -- Queries to clean up tables and views
 ```

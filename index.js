@@ -20,7 +20,7 @@ export async function pdfPageCount(base64In) {
 
 //Test Casebase64
 /*
-console.log('Testing BAse64 encode');
+console.log('Testing Base64 encode');
 
 const base64 =
  'JVBERi0xLjcKJYGBgYEKCjUgMCBvYmoKPDwKL0ZpbHRlciAvRmxhdGVEZWNvZGUKL0xlbm' +

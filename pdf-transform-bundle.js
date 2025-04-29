@@ -19670,11 +19670,11 @@ async function extractPage(pdfIn, pageNumber) {
     const pages = pdfDoc.getPageCount();
     const arr = [];
     arr.push(pageNumber);
-    if (pageNumber >= 0 && pageNumber <= pages) {
+    if (pageNumber >= 0 && pageNumber <= pages - 1) {
       const newPdfDoc = await PDFDocument_default.create();
       const [currentPage] = await newPdfDoc.copyPages(pdfDoc, arr);
       newPdfDoc.addPage(currentPage);
-      return newPdfDoc;
+      return await newPdfDoc.save();
     } else {
       throw new Error("Page number " + pageNumber + " not in range of document size. Current document has " + pages + " pages.");
     }
