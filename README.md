@@ -3,12 +3,12 @@ In this video we will show how to quickly created a node.js function that inputs
 
 This video and instructions assumes that the user: 
 
-Has a 23ai autonomous database running on Oracle Cloud Infrastructure. 
-Has developer access to an apex workspace. 
-Has created an object storage bucket and a cloud credintial to access the bucket from your apex user. [How to create an Auth Token and Bucket](https://youtu.be/CvyzCjdDvTU)
-Has Node.js installed locally able to execute in Visual Studio.
+- Has a 23ai autonomous database running on Oracle Cloud Infrastructure. [How to Provision an Autonomous Database](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-provision.html)
+- Has developer access to an apex workspace. [How to create a APEX Workspace and Users](https://docs.oracle.com/en/database/oracle/apex/24.1/htmig/creating-workspace-and-adding-apex-users.html#GUID-5CC1AEA8-F216-4C2F-B1C0-E0EB3C55CFEB)
+- Has created an object storage bucket and a cloud credintial to access the bucket from your apex user. [How to create an Auth Token and Bucket](https://youtu.be/CvyzCjdDvTU)
+- Has Node.js installed locally able to execute in Visual Studio. [How to Install Node.js](https://nodejs.org/en/download)
 
-## 23ai Database Setup
+## 23ai Database Multi-langual Engine Setup
 - Capture the following information for future use in the code. Create a new bucket and capture the namespace & name in the fields below for future reference.
 ```
 Database Username: 
@@ -123,7 +123,12 @@ The section below is Node.js 101, but useful for this example as notes on steps 
 
 - Install Node.js on your local machine. [https://nodejs.org/en/download](https://nodejs.org/en/download)
 
-- Create a new folder. Create a package inside the folder. 
+- Create a new folder. 
+    ```
+    mkdir pdfparse_test
+    cd pdfparse_test
+    ```
+- Create a package inside the folder. 
     ```
     npm init -y
     ```
@@ -180,7 +185,7 @@ The section below is Node.js 101, but useful for this example as notes on steps 
     You should see the following output. 
     ![](assets/2025-04-29-08-21-52.png)
 
-- Recomment the test case. 
+- Re-comment the test case. 
     ![](assets/2025-04-29-08-18-44.png)
 
 
@@ -270,39 +275,41 @@ The section below is Node.js 101, but useful for this example as notes on steps 
 
 - Now lets perform a little more complex example in which we will extract a single page from a pdf and save it as a new document in our table. Remember to update your document id and the page number you wishe to extract. 
     ```
-    const {pdfPageCountUnit8Array} = await import('pdflib-module');
-    const {extractPage} = await import('pdflib-module');
+ const {pdfPageCountUnit8Array} = await import('pdflib-module');
+const {extractPage} = await import('pdflib-module');
+const{oracledb} = await import ('mle-js-oracledb');
 
+try {
+//Lets query the document    
+const result = session.execute(
+    'SELECT ID, FILE_NAME, FILE_CONTENT FROM DOCUMENTS where id = 3',
+    [],{fetchInfo:{
+            ID: {type: oracledb.STRING},
+            FILE_NAME: {type: oracledb.STRING},
+            FILE_CONTENT :{type: oracledb.UINT8ARRAY}
+        },
+    outFormat: oracledb.OUT_FORMAT_OBJECT});
+const pageNum = 2;
 
-    try {
-    //Lets query the document    
-    const result = session.execute(
-        `SELECT ID, FILE_NAME, FILE_CONTENT FROM DOCUMENTS where id = <your document id>`,
-        [],{fetchInfo:{
-                ID: {type: oracledb.STRING},
-                FILE_NAME: {type: oracledb.STRING},
-                FILE_CONTENT :{type: oracledb.UINT8ARRAY}
-            },
-        outFormat: oracledb.OUT_FORMAT_OBJECT});
-    const pageNum = <page to extract>;
-
-    for (let row of result.rows) {
-        const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
-        console.log('ID: '+ row.ID + ' Filename: '+ row.FILE_NAME + ' Page Count: '+  pages);
-        //Parse out a page
-        const newPDF = await extractPage(row.FILE_CONTENT,pageNum);
-        const pages2 = await pdfPageCountUnit8Array(newPDF);
-        console.log('Extracted page '+pageNum  +'. New pdf size is: ' + pages2);
-        //insert extracted doc into the documents table
-        const filename = "page_"+pageNum+"_in_"+row.FILE_NAME;
-        const size = newPDF.length;
-        
-        session.execute("insert into documents (file_name, file_size, file_type, file_content) values (:pdfname, :pdfsize,'application/pdf',:pdf)", [filename,size,newPDF] );
-    }
-    }
-    catch (err) {
-        return err.errorNum + " " + err.message;
-    }
+for (let row of result.rows) {
+    const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
+    console.log('ID: '+ row.ID + ' Filename: '+ row.FILE_NAME + ' Page Count: '+  pages);
+    //Parse out a page
+    const newPDF = await extractPage(row.FILE_CONTENT,pageNum);
+    const pages2 = await pdfPageCountUnit8Array(newPDF);
+    console.log('Extracted page 2. New pdf size is: ' + pages2);
+    //insert extracted doc into the documents table
+    const filename = "page_"+pageNum+"_in_"+row.FILE_NAME;
+     const size = newPDF.length;
+     
+   let result =  session.execute("insert into documents (file_name, file_size, file_type, file_content) values (:pdfname, :pdfsize,'application/pdf',:pdf)", [filename,size,newPDF] );
+   let rowsInserted = result.rowsAffected; 
+   console.log('Rows Inserted: '+rowsInserted);
+}
+}
+catch (err) {
+    return err.errorNum + " " + err.message;
+}
     ```
     You should see output like below. 
     ![](assets/2025-04-29-14-12-01.png)
@@ -322,6 +329,8 @@ The section below is Node.js 101, but useful for this example as notes on steps 
 
 - Now we will execute our extract and count page functions in simple query together. 
     ```
+    select pdfPageCount(extractPage(file_content,3)) "Extracted Document Page" from documents where id = <add your document id>;
+    ex. from video
     select pdfPageCount(extractPage(file_content,3)) "Extracted Document Page" from documents where id = 3;
     ```
     ![](assets/2025-04-29-14-47-01.png)
