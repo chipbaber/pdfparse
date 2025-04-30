@@ -62,133 +62,133 @@ Then open SQL Commands
    );
 ```
 
--- Test to see if you have a database credintial created. If not please review and create before proceeding. [How to create an Auth Token and Bucket](https://youtu.be/CvyzCjdDvTU)
-```
-SELECT credential_name, username, comments FROM all_credentials;
-```
-![](assets/2025-04-28-09-11-18.png)
+- Test to see if you have a database credintial created. If not please review and create before proceeding. [How to create an Auth Token and Bucket](https://youtu.be/CvyzCjdDvTU)
+    ```
+    SELECT credential_name, username, comments FROM all_credentials;
+    ```
+    ![](assets/2025-04-28-09-11-18.png)
 
--- Upload pdfs to your bucket and test to see if you can view your pdf's in your bucket by running the query below. You must have at least one pdf in the bucket to proceed.
-```
-select * from dbms_cloud.list_objects('<cloud credintial>','https://objectstorage.us-ashburn-1.oraclecloud.com/n/<bucket namespace>/b/<bucket name>/o/') where object_name like '%.pdf'
-Ex. used in video
-select * from dbms_cloud.list_objects('CHIPSPICKS','https://objectstorage.us-ashburn-1.oraclecloud.com/n/id9ju5cntedk/b/vectorfiles/o/') where object_name like '%.pdf'
-```
-![](assets/2025-04-28-09-12-36.png)
+- Test to see if you can view your pdf's in your bucket by running the query below. You must have at least one pdf in the bucket to proceed.
+    ```
+    select * from dbms_cloud.list_objects('<cloud credintial>','https://objectstorage.us-ashburn-1.oraclecloud.com/n/<bucket namespace>/b/<bucket name>/o/') where object_name like '%.pdf'
+    Ex. used in video
+    select * from dbms_cloud.list_objects('CHIPSPICKS','https://objectstorage.us-ashburn-1.oraclecloud.com/n/id9ju5cntedk/b/vectorfiles/o/') where object_name like '%.pdf'
+    ```
+    ![](assets/2025-04-28-09-12-36.png)
 
--- Set your language to pl/sql. 
-![](assets/2025-04-28-09-13-53.png)
+- Now we will upload our pdfs from object storage into the database. To get started set your language to pl/sql. 
+    ![](assets/2025-04-28-09-13-53.png)
 Then execute the following to load your documents from object storage into the database as a blob. The code block below will need to be updated with your credential and object storage link.
-```
-declare
-   l_blob blob := null;
-   l_bucket varchar2(4000) := 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/<bucket namespace>/b/<bucket name>/o/';
-begin
-for i in (select * from dbms_cloud.list_objects('<cloud credintial>',l_bucket) where object_name like '%.pdf')
-loop
-   l_blob := dbms_cloud.get_object(
-     credential_name => '<cloud credintial>',
-     object_uri => l_bucket||i.object_name);
-insert into documents (file_name, file_size, file_type, file_content) values(i.object_name, i.bytes, 'application/pdf',l_blob);
-commit;
-end loop;
-end;
-```
-Ex. used in video
-```
-declare
-   l_blob blob := null;
-   l_bucket varchar2(4000) := 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/id9ju5cntedk/b/vectorfiles/o/';
-begin
-for i in (select * from dbms_cloud.list_objects('CHIPSPICKS',l_bucket) where object_name like '%.pdf')
-loop
-   l_blob := dbms_cloud.get_object(
-     credential_name => 'CHIPSPICKS',
-     object_uri => l_bucket||i.object_name);
-insert into documents (file_name, file_size, file_type, file_content) values(i.object_name, i.bytes, 'application/pdf',l_blob);
-commit;
-end loop;
-end;
-```
-![](assets/2025-04-28-09-14-44.png)
+    ```
+    declare
+    l_blob blob := null;
+    l_bucket varchar2(4000) := 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/<bucket namespace>/b/<bucket name>/o/';
+    begin
+    for i in (select * from dbms_cloud.list_objects('<cloud credintial>',l_bucket) where object_name like '%.pdf')
+    loop
+    l_blob := dbms_cloud.get_object(
+        credential_name => '<cloud credintial>',
+        object_uri => l_bucket||i.object_name);
+    insert into documents (file_name, file_size, file_type, file_content) values(i.object_name, i.bytes, 'application/pdf',l_blob);
+    commit;
+    end loop;
+    end;
+    ```
+    Ex. used in video
+    ```
+    declare
+    l_blob blob := null;
+    l_bucket varchar2(4000) := 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/id9ju5cntedk/b/vectorfiles/o/';
+    begin
+    for i in (select * from dbms_cloud.list_objects('CHIPSPICKS',l_bucket) where object_name like '%.pdf')
+    loop
+    l_blob := dbms_cloud.get_object(
+        credential_name => 'CHIPSPICKS',
+        object_uri => l_bucket||i.object_name);
+    insert into documents (file_name, file_size, file_type, file_content) values(i.object_name, i.bytes, 'application/pdf',l_blob);
+    commit;
+    end loop;
+    end;
+    ```
+    ![](assets/2025-04-28-09-14-44.png)
 
 - Query to make sure your documents loaded. 
-```
-select * from documents
-```
-![](assets/2025-04-28-09-18-10.png)
+    ```
+    select * from documents
+    ```
+    ![](assets/2025-04-28-09-18-10.png)
 
 ## Node.js Local Setup 
-Notes on steps to get code to run. 
+The section below is Node.js 101, but useful for this example as notes on steps to get your code bundled and loaded into Autonomous Database. 
 
 - Install Node.js on your local machine. [https://nodejs.org/en/download](https://nodejs.org/en/download)
 
--- Create a new folder. Create a package inside the folder. 
-```
-npm init -y
-```
-![](assets/2025-04-28-09-40-40.png)
+- Create a new folder. Create a package inside the folder. 
+    ```
+    npm init -y
+    ```
+    ![](assets/2025-04-28-09-40-40.png)
 
 - Check to see if any packages installed
-```
-npm list
-```
-![](assets/2025-04-28-09-42-36.png)
+    ```
+    npm list
+    ```
+    ![](assets/2025-04-28-09-42-36.png)
 
 - Install pdf-lib libraries
-```
-npm install pdf-lib
-```
-![](assets/2025-04-28-09-43-35.png)
+    ```
+    npm install pdf-lib
+    ```
+    ![](assets/2025-04-28-09-43-35.png)
 
 
 - (Optional) If you hit the error on installing then run:
-```
-Get-ExecutionPolicy
-```
-Then
-```
-Set-ExecutionPolicy -Scope CurrentUser
-```
-Set to 
-```
-RemoteSigned
-```
+    ```
+    Get-ExecutionPolicy
+    ```
+    Then
+    ```
+    Set-ExecutionPolicy -Scope CurrentUser
+    ```
+    Set to 
+    ```
+    RemoteSigned
+    ```
 
-![](assets/2025-03-24-10-16-00.png)
+    ![](assets/2025-03-24-10-16-00.png)
 
 - Add an entry to the package.json that set the type to Module for the package.
-```
-"type":"module",
-```
-![](assets/2025-04-28-09-20-15.png)
+    ```
+    "type":"module",
+    ```
+    ![](assets/2025-04-28-09-20-15.png)
 
 
-- Create a new index.js file or copy over the index.js file from the git repo. [https://github.com/chipbaber/pdfparse/blob/main/index.js](https://github.com/chipbaber/pdfparse/blob/main/index.js)
+- Create a new index.js file and copy code or copy over the index.js file from the git repo. [https://github.com/chipbaber/pdfparse/blob/main/index.js](https://github.com/chipbaber/pdfparse/blob/main/index.js)
 
 
 - We will now run a simple test case, to simulate local development. Uncomment the test casebase64.
-![](assets/2025-04-29-08-18-44.png)
+    ![](assets/2025-04-29-08-18-44.png)
 
-It should look like:
-![](assets/2025-04-29-08-20-48.png)
+    It should look like:
+    ![](assets/2025-04-29-08-20-48.png)
 
 - Run the test case locally. 
-```
-node index.js
-```
-You should see the following output. 
-![](assets/2025-04-29-08-21-52.png)
+    ```
+    node index.js
+    ```
+    You should see the following output. 
+    ![](assets/2025-04-29-08-21-52.png)
 
 - Recomment the test case. 
-![](assets/2025-04-29-08-18-44.png)
+    ![](assets/2025-04-29-08-18-44.png)
 
 
 - On local machine bundle up all the libraries required to execute the .js module. 
-```
-npx esbuild index.js --bundle --outfile=./pdf-transform-bundle.js --format=esm
-```
-![](assets/2025-04-29-08-25-44.png)
+    ```
+    npx esbuild index.js --bundle --outfile=./pdf-transform-bundle.js --format=esm
+    ```
+    ![](assets/2025-04-29-08-25-44.png)
 
 # Leveraging MLE with APEX in 23ai Autonomous Database
 
@@ -199,18 +199,18 @@ npx esbuild index.js --bundle --outfile=./pdf-transform-bundle.js --format=esm
 ![](assets/2025-04-23-10-03-02.png)
 
 - Upload the javascript bundle you just created as a new module and name it PDFLIB_MODULE. 
-```
-PDFLIB_MODULE
-```
+    ```
+    PDFLIB_MODULE
+    ```
 
-![](assets/2025-04-23-10-03-55.png)
+    ![](assets/2025-04-23-10-03-55.png)
 
 - Right click on MLE Environments and Create a MLE environment for your code base called PDF_TRANSFORM.
-```
-PDF_TRANSFORM
-```
-![](assets/2025-04-23-10-05-00.png)
-![](assets/2025-04-23-10-07-17.png)
+    ```
+    PDF_TRANSFORM
+    ```
+    ![](assets/2025-04-23-10-05-00.png)
+    ![](assets/2025-04-23-10-07-17.png)
 
 - Click Add Import and select the PDFLIB_MODULE module to be included in your environment. 
 ![](assets/2025-04-23-10-08-22.png)
@@ -224,7 +224,6 @@ PDF_TRANSFORM
     ![](assets/2025-04-23-10-10-35.png)
 
 - Select all your documents and write down the ids for the next step. 
-
     ```
     select * from documents
     ```
@@ -234,80 +233,79 @@ PDF_TRANSFORM
 - Test your function by executing a javascript code block in SQL Worksheet that returns the total number of pages in a pdf. Make sure to set the language and environment variables like below. Be sure to modify the block below to add your id. This block will return the number of pages in a pdf. 
     ![](assets/2025-04-23-10-12-31.png)
  
-```
-const {pdfPageCountUnit8Array} = await import('pdflib-module');
-const{oracledb} = await import ('mle-js-oracledb');
+    ```
+    const {pdfPageCountUnit8Array} = await import('pdflib-module');
 
-try {
-const result = session.execute(
-    `SELECT ID, FILE_NAME, FILE_CONTENT FILE_CONTENT FROM DOCUMENTS where id = <add your ID>`,
-    [],{fetchInfo:{
-            ID: {type: oracledb.STRING},
-            FILE_NAME: {type: oracledb.STRING},
-            FILE_CONTENT :{type: oracledb.UINT8ARRAY}
-        },
-    outFormat: oracledb.OUT_FORMAT_OBJECT});
+    try {
+    const result = session.execute(
+        `SELECT ID, FILE_NAME, FILE_CONTENT FILE_CONTENT FROM DOCUMENTS where id = <add your ID>`,
+        [],{fetchInfo:{
+                ID: {type: oracledb.STRING},
+                FILE_NAME: {type: oracledb.STRING},
+                FILE_CONTENT :{type: oracledb.UINT8ARRAY}
+            },
+        outFormat: oracledb.OUT_FORMAT_OBJECT});
 
-for (let row of result.rows) {
-    const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
-    console.log('ID: '+ row.ID + ' Filename: '+ row.FILE_NAME + ' Page Count: '+  pages);
-}
-}
-catch (err) {
-    return err.errorNum + " " + err.message;
-}
-```
+    for (let row of result.rows) {
+        const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
+        console.log('ID: '+ row.ID + ' Filename: '+ row.FILE_NAME + ' Page Count: '+  pages);
+    }
+    }
+    catch (err) {
+        return err.errorNum + " " + err.message;
+    }
+    ```
 
 
 - Next we will create a pl/sql function so we can easily call our javascript function from a query. 
-```
-create or replace function  pdfPageCount(inPDF in blob) return number
-as mle module PDFLIB_MODULE env PDF_TRANSFORM signature 'pdfPageCountUnit8Array(Uint8Array)';
-```
+    ```
+    create or replace function  pdfPageCount(inPDF in blob) return number
+    as mle module PDFLIB_MODULE env PDF_TRANSFORM signature 'pdfPageCountUnit8Array(Uint8Array)';
+    ```
 
 - Lets run the query now to see the function execute inline. 
-```
-select id, file_name, file_size, pdfPageCount(file_content) "Pages" from documents;
-```
+    ```
+    select id, file_name, file_size, pdfPageCount(file_content) "Pages" from documents;
+    ```
 
 - Now lets perform a little more complex example in which we will extract a single page from a pdf and save it as a new document in our table. Remember to update your document id and the page number you wishe to extract. 
-```
-const {pdfPageCountUnit8Array} = await import('pdflib-module');
-const {extractPage} = await import('pdflib-module');
-const{oracledb} = await import ('mle-js-oracledb');
+    ```
+    const {pdfPageCountUnit8Array} = await import('pdflib-module');
+    const {extractPage} = await import('pdflib-module');
 
-try {
-//Lets query the document    
-const result = session.execute(
-    `SELECT ID, FILE_NAME, FILE_CONTENT FROM DOCUMENTS where id = <your document id>`,
-    [],{fetchInfo:{
-            ID: {type: oracledb.STRING},
-            FILE_NAME: {type: oracledb.STRING},
-            FILE_CONTENT :{type: oracledb.UINT8ARRAY}
-        },
-    outFormat: oracledb.OUT_FORMAT_OBJECT});
-const pageNum = <page to extract>;
 
-for (let row of result.rows) {
-    const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
-    console.log('ID: '+ row.ID + ' Filename: '+ row.FILE_NAME + ' Page Count: '+  pages);
-    //Parse out a page
-    const newPDF = await extractPage(row.FILE_CONTENT,pageNum);
-    const pages2 = await pdfPageCountUnit8Array(newPDF);
-    console.log('Extracted page '+pageNum  +'. New pdf size is: ' + pages2);
-    //insert extracted doc into the documents table
-    const filename = "page_"+pageNum+"_in_"+row.FILE_NAME;
-     const size = newPDF.length;
-     
-    session.execute("insert into documents (file_name, file_size, file_type, file_content) values (:pdfname, :pdfsize,'application/pdf',:pdf)", [filename,size,newPDF] );
-}
-}
-catch (err) {
-    return err.errorNum + " " + err.message;
-}
-```
-You should see output like below. 
-![](assets/2025-04-29-14-12-01.png)
+    try {
+    //Lets query the document    
+    const result = session.execute(
+        `SELECT ID, FILE_NAME, FILE_CONTENT FROM DOCUMENTS where id = <your document id>`,
+        [],{fetchInfo:{
+                ID: {type: oracledb.STRING},
+                FILE_NAME: {type: oracledb.STRING},
+                FILE_CONTENT :{type: oracledb.UINT8ARRAY}
+            },
+        outFormat: oracledb.OUT_FORMAT_OBJECT});
+    const pageNum = <page to extract>;
+
+    for (let row of result.rows) {
+        const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
+        console.log('ID: '+ row.ID + ' Filename: '+ row.FILE_NAME + ' Page Count: '+  pages);
+        //Parse out a page
+        const newPDF = await extractPage(row.FILE_CONTENT,pageNum);
+        const pages2 = await pdfPageCountUnit8Array(newPDF);
+        console.log('Extracted page '+pageNum  +'. New pdf size is: ' + pages2);
+        //insert extracted doc into the documents table
+        const filename = "page_"+pageNum+"_in_"+row.FILE_NAME;
+        const size = newPDF.length;
+        
+        session.execute("insert into documents (file_name, file_size, file_type, file_content) values (:pdfname, :pdfsize,'application/pdf',:pdf)", [filename,size,newPDF] );
+    }
+    }
+    catch (err) {
+        return err.errorNum + " " + err.message;
+    }
+    ```
+    You should see output like below. 
+    ![](assets/2025-04-29-14-12-01.png)
 
 - Select all from you document table to verify that your page was extracted.
     ```
@@ -322,40 +320,40 @@ You should see output like below.
     ```
     ![](assets/2025-04-29-14-16-32.png)
 
--- Now we will execute our extract and count page functions in simple query together. 
-```
-select pdfPageCount(extractPage(file_content,3)) "Extracted Document Page" from documents where id = 3;
-```
-![](assets/2025-04-29-14-47-01.png)
+- Now we will execute our extract and count page functions in simple query together. 
+    ```
+    select pdfPageCount(extractPage(file_content,3)) "Extracted Document Page" from documents where id = 3;
+    ```
+    ![](assets/2025-04-29-14-47-01.png)
 
--- We can also execute the function to extract a page and save back to object storage. 
-```
-DECLARE
-      my_blob_data BLOB;
-      v_file_name varchar2(300);
-BEGIN 
-select SUBSTR(file_name,0,length(file_name)-4)||'_page_3.pdf', extractPage(file_content,3) into v_file_name, my_blob_data from documents where id = 3;
-DBMS_CLOUD.PUT_OBJECT(
-     credential_name => 'CHIPSPICKS',
-     object_uri => 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/id9ju5cntedk/b/vectorfiles/o/'||v_file_name,
-     contents => my_blob_data); 
-END;
-```
-![](assets/2025-04-29-14-50-30.png)
-
-
--- Validate the page was inserted into object storage with the query below.
-```
-select * from dbms_cloud.list_objects('<your credential>','https://objectstorage.us-ashburn-1.oraclecloud.com/n/<namespace>/b/<bucketname>/o/') where object_name like '%.pdf'
-```
-![](assets/2025-04-29-14-52-53.png)
+- We can also execute the function to extract a page and save back to object storage. 
+    ```
+    DECLARE
+        my_blob_data BLOB;
+        v_file_name varchar2(300);
+    BEGIN 
+    select SUBSTR(file_name,0,length(file_name)-4)||'_page_3.pdf', extractPage(file_content,3) into v_file_name, my_blob_data from documents where id = 3;
+    DBMS_CLOUD.PUT_OBJECT(
+        credential_name => 'CHIPSPICKS',
+        object_uri => 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/id9ju5cntedk/b/vectorfiles/o/'||v_file_name,
+        contents => my_blob_data); 
+    END;
+    ```
+    ![](assets/2025-04-29-14-50-30.png)
 
 
--- Queries to clean up tables and views
-```
-drop function "VECTOR"."EXTRACTPAGE";
-drop function "VECTOR"."PDFPAGECOUNT";
-drop table "VECTOR"."DOCUMENTS";
-drop mle env "VECTOR"."PDF_TRANSFORM";
-drop mle module "VECTOR"."PDFLIB_MODULE";
-```
+- Validate the page was inserted into object storage with the query below.
+    ```
+    select * from dbms_cloud.list_objects('<your credential>','https://objectstorage.us-ashburn-1.oraclecloud.com/n/<namespace>/b/<bucketname>/o/') where object_name like '%.pdf'
+    ```
+    ![](assets/2025-04-29-14-52-53.png)
+
+
+- Queries to clean up tables and views
+    ```
+    drop function "VECTOR"."EXTRACTPAGE";
+    drop function "VECTOR"."PDFPAGECOUNT";
+    drop table "VECTOR"."DOCUMENTS";
+    drop mle env "VECTOR"."PDF_TRANSFORM";
+    drop mle module "VECTOR"."PDFLIB_MODULE";
+    ```
