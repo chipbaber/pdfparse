@@ -279,7 +279,7 @@ const{oracledb} = await import ('mle-js-oracledb');
 try {
 //Lets query the document    
 const result = session.execute(
-    `SELECT ID, FILE_NAME, FILE_CONTENT FILE_CONTENT FROM DOCUMENTS where id = <your document id>`,
+    `SELECT ID, FILE_NAME, FILE_CONTENT FROM DOCUMENTS where id = <your document id>`,
     [],{fetchInfo:{
             ID: {type: oracledb.STRING},
             FILE_NAME: {type: oracledb.STRING},

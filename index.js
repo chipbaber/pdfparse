@@ -4,12 +4,10 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib"
 //inputbase 64 and get page  count
 export async function pdfPageCount(base64In) {
   try {
-   // console.log('Initializing Page Count');
     //This line is a polyfill for execution in the database on larger base64 arrays
     globalThis.setTimeout = (functionRef, delay, ...args) => {functionRef.apply(null, args);}
     const dataUri = 'data:application/pdf;base64,' + base64In;
-    const pdfIn = await PDFDocument.load(dataUri, 100);
-   console.log('Document Loaded successfully.');
+    const pdfIn = await PDFDocument.load(dataUri);
     return await pdfIn.getPageCount();
   }
   catch (err) {
@@ -17,9 +15,7 @@ export async function pdfPageCount(base64In) {
   }
 }
 
-
-//Test Casebase64
-/*
+/*Test Casebase64
 console.log('Testing Base64 encode');
 
 const base64 =
@@ -46,10 +42,9 @@ const base64 =
 
 export async function pdfPageCountUnit8Array(pdfIn) {
   try {
-  // console.log('Initializing Page CountPages input Uint8Array');
   //This line is a polyfill for execution in the database on larger pdfs
   globalThis.setTimeout = (functionRef, delay, ...args) => {functionRef.apply(null, args);}
-  /*Test Case local */
+   /*Test Code to run pdf test case locally from test file*/
    //const pdfIn = fs.readFileSync('./input/2023_Annals_Contraception.pdf');   
     const pdfDoc = await PDFDocument.load(pdfIn);
     const pages = pdfDoc.getPageCount();
@@ -61,15 +56,14 @@ export async function pdfPageCountUnit8Array(pdfIn) {
   }
 }
 
-/*Test Case for */ 
-//console.log('Base Test for pdfPageCountUnit8Array');
-//Load the original document
-//pdfPageCountUnit8Array('Test');
+/*Test Case for  Base Test for pdfPageCountUnit8Array
+pdfPageCountUnit8Array('Test');
+*/
 
 export async function extractPage(pdfIn, pageNumber) {
   try {
-   //console.log('Initializing getPage');
-   /*Test Case local 
+
+   /*Test Code to run local file test
     const pdfIn = fs.readFileSync('./input/2023_Annals_Contraception.pdf');  
    */
 
