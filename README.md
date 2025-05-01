@@ -46,13 +46,13 @@ grant unlimited tablespace to vector;
 - Open APEX from the Cloud Console. 
 ![](assets/2025-05-01-09-49-14.png)
 
-Select create workspace.
+- Select create workspace.
 ![](assets/2025-05-01-09-49-52.png)
 
-Choose to leverage and existing schema and set to the database user you created earlier. 
+- Choose to leverage and existing schema and set to the database user you created earlier. 
 ![](assets/2025-05-01-09-51-20.png)
 
-Open the new workspace.
+- Open the new workspace.
 ![](assets/2025-05-01-09-52-12.png)
 
 - In a new tab login as your database user to your apex workspace. 
@@ -61,7 +61,7 @@ Open the new workspace.
 - Click on SQL* Worksheet
 ![](assets/2025-04-28-09-06-57.png)
 
-Then open SQL Commands
+- Then open SQL Commands
 ![](assets/2025-04-28-09-08-15.png)
 
 
@@ -100,7 +100,7 @@ Then open SQL Commands
        tenancy_ocid    => '<your tenancy ocid>',
        private_key     => '<your private key>',
        fingerprint     => '<your fingerprint>');
-END;
+    END;
    ```
    ![](assets/2025-05-01-10-00-17.png)
 
@@ -115,7 +115,9 @@ END;
 
 - Now we will upload our pdfs from object storage into the database. To get started set your language to pl/sql. 
     ![](assets/2025-04-28-09-13-53.png)
+
     Then execute the following to load your documents from object storage into the database as a blob. The code block below will need to be updated with your credential and object storage link.
+
     ```
     declare
     l_blob blob := null;
@@ -131,7 +133,9 @@ END;
     end loop;
     end;
     ```
-    Ex. used in video
+
+    Example used in video
+
     ```
     declare
     l_blob blob := null;
