@@ -1,5 +1,8 @@
-# Unlock the power of Node.js Code inside 23ai
+# How to Parse a Page from a PDF inside 23ai Leveraging the Multi-lingual Engine
 In this video we will show how to quickly created a node.js function that inputs a pdf and outputs the number of pages inside the pdf as well as parses out a page in the pdf. We will then load this code directly into the 23ai database and show how easy it is to create oracle database functions on the node.js code that can be executed inside your database. 
+
+It is reccomended to watch this video before proceeding through the steps below.
+[Video: How to Parse a Page from a PDF inside 23ai Leveraging the Multi-lingual Engine](https://youtu.be/o9NTFNzxscA)
 
 ## 23ai Database Multi-langual Engine Setup
 - Provision a 23ai Free tier database. It is reccomended you want the video above and follow the steps. 
@@ -9,17 +12,12 @@ In this video we will show how to quickly created a node.js function that inputs
     - Upload several pdfs to the bucket. 
 
 - Capture the following information in a notepad for future use in the code as you go through the steps below. 
+
 ```
 Database Username: 
 Namespace: 
 Bucket name: 
 APEX Workspace Name: 
-
-Ex. used in video
-Database Username: vector
-APEX Workspace Name: Vector
-Namespace: id9ju5cntedk
-Bucket name: vectorfiles
 ```
 
 - Login to your Cloud console, navigate to your autonmous database and open SQL Developer Web. Create then Grant the following to your database user.
@@ -30,15 +28,6 @@ grant execute on javascript to <database username>;
 grant create mle to <database username>;
 grant db_developer_role to <database username>;
 grant execute on DBMS_CLOUD to <database username>;
-
-Ex. used in video
-create user vector identified by "{password}";
-grant execute dynamic mle to vector;
-grant execute on javascript to vector;
-grant create mle to vector;
-grant db_developer_role to vector;
-grant execute on DBMS_CLOUD to vector;
-grant unlimited tablespace to vector;
 ```
 ![](assets/2025-04-28-09-04-35.png)
 
@@ -108,8 +97,6 @@ grant unlimited tablespace to vector;
 - Test to see if you can view your pdf's in your bucket by running the query below. You must have at least one pdf in the bucket to proceed.
     ```
     select * from dbms_cloud.list_objects('<cloud credintial>','https://objectstorage.us-ashburn-1.oraclecloud.com/n/<bucket namespace>/b/<bucket name>/o/') where object_name like '%.pdf'
-    Ex. used in video
-    select * from dbms_cloud.list_objects('CHIPSPICKS','https://objectstorage.us-ashburn-1.oraclecloud.com/n/id9ju5cntedk/b/vectorfiles/o/') where object_name like '%.pdf'
     ```
     ![](assets/2025-04-28-09-12-36.png)
 
@@ -123,28 +110,10 @@ grant unlimited tablespace to vector;
     l_blob blob := null;
     l_bucket varchar2(4000) := 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/<bucket namespace>/b/<bucket name>/o/';
     begin
-    for i in (select * from dbms_cloud.list_objects('<cloud credintial>',l_bucket) where object_name like '%.pdf')
+    for i in (select * from dbms_cloud.list_objects('<cloud credential name>',l_bucket) where object_name like '%.pdf')
     loop
     l_blob := dbms_cloud.get_object(
         credential_name => '<cloud credintial>',
-        object_uri => l_bucket||i.object_name);
-    insert into documents (file_name, file_size, file_type, file_content) values(i.object_name, i.bytes, 'application/pdf',l_blob);
-    commit;
-    end loop;
-    end;
-    ```
-
-    Example used in video
-
-    ```
-    declare
-    l_blob blob := null;
-    l_bucket varchar2(4000) := 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/id9ju5cntedk/b/vectorfiles/o/';
-    begin
-    for i in (select * from dbms_cloud.list_objects('CHIPSPICKS',l_bucket) where object_name like '%.pdf')
-    loop
-    l_blob := dbms_cloud.get_object(
-        credential_name => 'CHIPSPICKS',
         object_uri => l_bucket||i.object_name);
     insert into documents (file_name, file_size, file_type, file_content) values(i.object_name, i.bytes, 'application/pdf',l_blob);
     commit;
@@ -163,8 +132,6 @@ grant unlimited tablespace to vector;
 The section below is Node.js 101, but useful for this example as notes on steps to get your code bundled and loaded into Autonomous Database. 
 
 - Install Node.js locally with Visual Studio. [How to Install Node.js](https://nodejs.org/en/download)
-
-- Install Node.js on your local machine. [https://nodejs.org/en/download](https://nodejs.org/en/download)
 
 - Create a new folder. 
     ```
@@ -332,7 +299,7 @@ const result = session.execute(
             FILE_CONTENT :{type: oracledb.UINT8ARRAY}
         },
     outFormat: oracledb.OUT_FORMAT_OBJECT});
-const pageNum = 2;
+const pageNum = <page number to parse out>;
 
 for (let row of result.rows) {
     const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
@@ -340,7 +307,7 @@ for (let row of result.rows) {
     //Parse out a page
     const newPDF = await extractPage(row.FILE_CONTENT,pageNum);
     const pages2 = await pdfPageCountUnit8Array(newPDF);
-    console.log('Extracted page 2. New pdf size is: ' + pages2);
+    console.log('Extracted page. New pdf size is: ' + pages2);
     //insert extracted doc into the documents table
     const filename = "page_"+pageNum+"_in_"+row.FILE_NAME;
      const size = newPDF.length;
@@ -373,8 +340,6 @@ catch (err) {
 - Now we will execute our extract and count page functions in simple query together. 
     ```
     select pdfPageCount(extractPage(file_content,3)) "Extracted Document Page" from documents where id = <add your document id>;
-    ex. from video
-    select pdfPageCount(extractPage(file_content,3)) "Extracted Document Page" from documents where id = 3;
     ```
     ![](assets/2025-04-29-14-47-01.png)
 
@@ -384,10 +349,10 @@ catch (err) {
         my_blob_data BLOB;
         v_file_name varchar2(300);
     BEGIN 
-    select SUBSTR(file_name,0,length(file_name)-4)||'_page_3.pdf', extractPage(file_content,3) into v_file_name, my_blob_data from documents where id = <your id>;
+    select SUBSTR(file_name,0,length(file_name)-4)||'_page_<your page to extract>.pdf', extractPage(file_content,<your page to extract>) into v_file_name, my_blob_data from documents where id = <your id>;
     DBMS_CLOUD.PUT_OBJECT(
-        credential_name => 'CHIPSPICKS',
-        object_uri => 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/id9ju5cntedk/b/vectorfiles/o/'||v_file_name,
+        credential_name => '<cloud credential name>',
+        object_uri => 'https://objectstorage.us-ashburn-1.oraclecloud.com/n/<your namespace>/b/<your bucket name>/o/'||v_file_name,
         contents => my_blob_data); 
     END;
     ```
@@ -403,9 +368,9 @@ catch (err) {
 
 - Queries to clean up tables and views
     ```
-    drop function "VECTOR"."EXTRACTPAGE";
-    drop function "VECTOR"."PDFPAGECOUNT";
-    drop table "VECTOR"."DOCUMENTS";
-    drop mle env "VECTOR"."PDF_TRANSFORM";
-    drop mle module "VECTOR"."PDFLIB_MODULE";
+    drop function EXTRACTPAGE;
+    drop function PDFPAGECOUNT;
+    drop table DOCUMENTS;
+    drop mle env PDF_TRANSFORM;
+    drop mle module PDFLIB_MODULE;
     ```
