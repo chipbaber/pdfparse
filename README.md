@@ -28,6 +28,7 @@ grant execute on javascript to <database username>;
 grant create mle to <database username>;
 grant db_developer_role to <database username>;
 grant execute on DBMS_CLOUD to <database username>;
+grant unlimited tablespace to <database username>;
 ```
 ![](assets/2025-04-28-09-04-35.png)
 
@@ -284,7 +285,7 @@ The section below is Node.js 101, but useful for this example as notes on steps 
     ```
 
 - Now lets perform a little more complex example in which we will extract a single page from a pdf and save it as a new document in our table. Remember to update your document id and the page number you wishe to extract. 
-    ```
+```
  const {pdfPageCountUnit8Array} = await import('pdflib-module');
 const {extractPage} = await import('pdflib-module');
 const{oracledb} = await import ('mle-js-oracledb');
@@ -299,7 +300,8 @@ const result = session.execute(
             FILE_CONTENT :{type: oracledb.UINT8ARRAY}
         },
     outFormat: oracledb.OUT_FORMAT_OBJECT});
-const pageNum = <page number to parse out>;
+    //subtract 1 from your page number to account for the array starting at 0     
+const pageNum = <page number to parse out>-1;
 
 for (let row of result.rows) {
     const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
@@ -320,7 +322,8 @@ for (let row of result.rows) {
 catch (err) {
     return err.errorNum + " " + err.message;
 }
-    ```
+```
+
     You should see output like below. 
     ![](assets/2025-04-29-14-12-01.png)
 

@@ -72,7 +72,8 @@ export async function extractPage(pdfIn, pageNumber) {
     const pdfDoc = await PDFDocument.load(pdfIn);
     const pages = pdfDoc.getPageCount();
     const arr = [];
-    arr.push(pageNumber);
+    //subtract 1 from page number to account for 0 array. 
+    arr.push(pageNumber-1);
 
     //check to see if page in range of document
     if (pageNumber >= 0 && pageNumber <= pages-1 ) {
