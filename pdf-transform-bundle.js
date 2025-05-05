@@ -19642,8 +19642,7 @@ async function pdfPageCount(base64In) {
       functionRef.apply(null, args);
     };
     const dataUri = "data:application/pdf;base64," + base64In;
-    const pdfIn = await PDFDocument_default.load(dataUri, 100);
-    console.log("Document Loaded successfully.");
+    const pdfIn = await PDFDocument_default.load(dataUri);
     return await pdfIn.getPageCount();
   } catch (err) {
     console.log("Error inside pdfPageCount" + err);
@@ -19669,7 +19668,7 @@ async function extractPage(pdfIn, pageNumber) {
     const pdfDoc = await PDFDocument_default.load(pdfIn);
     const pages = pdfDoc.getPageCount();
     const arr = [];
-    arr.push(pageNumber);
+    arr.push(pageNumber - 1);
     if (pageNumber >= 0 && pageNumber <= pages - 1) {
       const newPdfDoc = await PDFDocument_default.create();
       const [currentPage] = await newPdfDoc.copyPages(pdfDoc, arr);

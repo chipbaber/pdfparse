@@ -9,7 +9,7 @@ It is reccomended to watch this video before proceeding through the steps below.
 
     - Create a new bucket and capture the namespace & name in the fields in notepad. [How to create an Auth Token and Bucket](https://youtu.be/CvyzCjdDvTU)
 
-    - Upload several pdfs to the bucket. 
+    - Upload several pdfs to the bucket. The example pdfs can be found in the input directory []().
 
 - Capture the following information in a notepad for future use in the code as you go through the steps below. 
 
@@ -132,7 +132,7 @@ grant unlimited tablespace to <database username>;
 ## Node.js Local Setup 
 The section below is Node.js 101, but useful for this example as notes on steps to get your code bundled and loaded into Autonomous Database. 
 
-- Install Node.js locally with Visual Studio. [How to Install Node.js](https://nodejs.org/en/download)
+- Install Node.js locally with Visual Studio. The version of node leveraged in this example was v22.14.0. [How to Install Node.js](https://nodejs.org/en/download)
 
 - Create a new folder. 
     ```
@@ -300,8 +300,8 @@ const result = session.execute(
             FILE_CONTENT :{type: oracledb.UINT8ARRAY}
         },
     outFormat: oracledb.OUT_FORMAT_OBJECT});
-    //subtract 1 from your page number to account for the array starting at 0     
-const pageNum = <page number to parse out>-1;
+  
+const pageNum = <page number to parse out>;
 
 for (let row of result.rows) {
     const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
