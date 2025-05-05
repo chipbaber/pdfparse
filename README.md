@@ -9,7 +9,7 @@ It is reccomended to watch this video before proceeding through the steps below.
 
     - Create a new bucket and capture the namespace & name in the fields in notepad. [How to create an Auth Token and Bucket](https://youtu.be/CvyzCjdDvTU)
 
-    - Upload several pdfs to the bucket. The example pdfs can be found in the input directory []().
+    - Upload several pdfs to the bucket. The example pdfs can be found in the input directory [https://github.com/chipbaber/pdfparse/tree/main/input](https://github.com/chipbaber/pdfparse/tree/main/input).
 
 - Capture the following information in a notepad for future use in the code as you go through the steps below. 
 
