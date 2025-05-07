@@ -76,7 +76,7 @@ export async function extractPage(pdfIn, pageNumber) {
     arr.push(pageNumber-1);
 
     //check to see if page in range of document
-    if (pageNumber >= 0 && pageNumber <= pages-1 ) {
+    if (pageNumber >= 0 && pageNumber <= pages) {
       //Create New PDF
       const newPdfDoc = await PDFDocument.create();
       //Copy the page
@@ -109,7 +109,7 @@ export async function extractPage(pdfIn, pageNumber) {
 //Load the original document
 //extractPage('Test',5);
 
-/*Example Code for future use to extract all pages from a pdf as individuals. */
+/*Example Code for future use to extract all pages from a pdf as individual pages. */
 /*
 export async function splitPDFIntoPages(pdf) {
   try {

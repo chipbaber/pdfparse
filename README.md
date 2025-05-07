@@ -26,6 +26,7 @@ create user <database username> identified by "{password}";
 grant execute dynamic mle to <database username>;
 grant execute on javascript to <database username>;
 grant create mle to <database username>;
+GRANT CREATE PROCEDURE TO <database username>;
 grant db_developer_role to <database username>;
 grant execute on DBMS_CLOUD to <database username>;
 grant unlimited tablespace to <database username>;
