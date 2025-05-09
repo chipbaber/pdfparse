@@ -291,10 +291,10 @@ The section below is Node.js 101, but useful for this example as notes on steps 
 const {extractPage} = await import('pdflib-module');
 const{oracledb} = await import ('mle-js-oracledb');
 
-try {
+
 //Lets query the document    
 const result = session.execute(
-    'SELECT ID, FILE_NAME, FILE_CONTENT FROM DOCUMENTS where id = <your id number>',
+    'SELECT ID, FILE_NAME, FILE_CONTENT FROM DOCUMENTS where id = <document id>',
     [],{fetchInfo:{
             ID: {type: oracledb.STRING},
             FILE_NAME: {type: oracledb.STRING},
@@ -302,7 +302,7 @@ const result = session.execute(
         },
     outFormat: oracledb.OUT_FORMAT_OBJECT});
   
-const pageNum = <page number to parse out>;
+const pageNum = <page to extract>;
 
 for (let row of result.rows) {
     const pages = await pdfPageCountUnit8Array(row.FILE_CONTENT);
@@ -315,13 +315,14 @@ for (let row of result.rows) {
     const filename = "page_"+pageNum+"_in_"+row.FILE_NAME;
      const size = newPDF.length;
      
-   let result =  session.execute("insert into documents (file_name, file_size, file_type, file_content) values (:pdfname, :pdfsize,'application/pdf',:pdf)", [filename,size,newPDF] );
+   let result =  session.execute("insert into documents (file_name, file_size, file_type, file_content) values (:pdfname, :pdfsize,'application/pdf',:pdf)",
+            {
+                pdfname: { dir: oracledb.BIND_IN, val: filename,        type: oracledb.STRING },
+                pdfsize: { dir: oracledb.BIND_IN, val: size,            type: oracledb.NUMBER },
+                pdf:     { dir: oracledb.BIND_IN, val: newPDF,          type: oracledb.UINT8ARRAY}
+            });
    let rowsInserted = result.rowsAffected; 
    console.log('Rows Inserted: '+rowsInserted);
-}
-}
-catch (err) {
-    return err.errorNum + " " + err.message;
 }
 ```
 
