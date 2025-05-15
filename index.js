@@ -109,40 +109,37 @@ export async function extractPage(pdfIn, pageNumber) {
 //Load the original document
 //extractPage('Test',5);
 
-/*Example Code for future use to extract all pages from a pdf as individual pages. */
-/*
-export async function splitPDFIntoPages(pdf) {
+/*Example Code for future use to extract all pages from a pdf as individual pages and save to a BLOB in the database. */
+/**/
+export async function splitPDFIntoPages(pdf, pdf_name) {
   try {
-  console.log('Starting Split PDF');
-  //Load the original document
-  const PdfBytes = fs.readFileSync(pdf);
-  const pdfIn = await PDFDocument.load(PdfBytes);  
+    globalThis.setTimeout = (functionRef, delay, ...args) => {
+      functionRef.apply(null, args);
+    };
+    //console.log("Starting Split PDF");
+    const pdfIn = await PDFDocument_default.load(pdf);
+    for (let i = 0; i < pdfIn.getPageCount(); i++) {
+      const newPdfDoc = await PDFDocument_default.create();
+      const [currentPage] = await newPdfDoc.copyPages(pdfIn, [i]);
+      newPdfDoc.addPage(currentPage);
+      const pdfBytes = await newPdfDoc.save();
 
-  console.log('Initial Page Count:'+pdfIn.getPageCount());
-  //Loop through each page to chunk out each individual page. 
-  for (let i = 0; i < pdfIn.getPageCount(); i++) {
-    console.log('Extracting Page:'+i);
-    //Create New PDF
-    const newPdfDoc = await PDFDocument.create();
-    //Copy the page
-    const [currentPage] = await newPdfDoc.copyPages(pdfIn, [i])
-    //add copied page
-    newPdfDoc.addPage(currentPage);
-    console.log('Initial Page Count:'+newPdfDoc.getPageCount());
-
-    //for use in Autonomous leverage
-  //  const newPdfBytes = await newPdfDoc.save();
-    console.log('Writing file: '+'./output/'+pdf.substring(8,pdf.length -4)+'_'+i+'.pdf');
-
-    // For local testing
-    //fs.writeFileSync('./output/'+pdf.substring(8,pdf.length -4)+'_'+i+'.pdf', await newPdfDoc.save()); 
+      const size = pdfBytes.length;
+      const fileName = pdf_name.substring(0, pdf_name.length - 4) + "_page_" + i + ".pdf";
+      console.log("Saving file: " + fileName+" Size: "+ size);
+      let result = session.execute(
+        "insert into documents (file_name, file_size, file_type, file_content) values (:pdfname, :pdfsize,'application/pdf',:pdf)",
+        {
+          pdfname: { dir: oracledb.BIND_IN, val: fileName, type: oracledb.STRING },
+          pdfsize: { dir: oracledb.BIND_IN, val: size, type: oracledb.NUMBER },
+          pdf: { dir: oracledb.BIND_IN, val: pdfBytes, type: oracledb.UINT8ARRAY }
+        }
+      );
+      let rowsInserted = result.rowsAffected;
+      console.log("Rows Inserted: " + rowsInserted);
     }
-    
-}
-catch (err) {
-  console.log('Error inside splitPDFIntoPages'+ err); 
+  } catch (err) {
+    console.log("Error inside splitPDFIntoPages" + err);
+  }
 }
 
-}
-*/
-//splitPDFIntoPages('./input/2019_JAMA_Egg-risk.pdf');

@@ -19669,7 +19669,7 @@ async function extractPage(pdfIn, pageNumber) {
     const pages = pdfDoc.getPageCount();
     const arr = [];
     arr.push(pageNumber - 1);
-    if (pageNumber >= 0 && pageNumber <= pages - 1) {
+    if (pageNumber >= 0 && pageNumber <= pages) {
       const newPdfDoc = await PDFDocument_default.create();
       const [currentPage] = await newPdfDoc.copyPages(pdfDoc, arr);
       newPdfDoc.addPage(currentPage);
@@ -19681,10 +19681,41 @@ async function extractPage(pdfIn, pageNumber) {
     console.log("Error inside getPage" + err);
   }
 }
+async function splitPDFIntoPages(pdf, pdf_name) {
+  try {
+    globalThis.setTimeout = (functionRef, delay, ...args) => {
+      functionRef.apply(null, args);
+    };
+    console.log("Starting Split PDF");
+    const pdfIn = await PDFDocument_default.load(pdf);
+    for (let i = 0; i < pdfIn.getPageCount(); i++) {
+      console.log("Extracting Page:" + i);
+      const newPdfDoc = await PDFDocument_default.create();
+      const [currentPage] = await newPdfDoc.copyPages(pdfIn, [i]);
+      newPdfDoc.addPage(currentPage);
+      const size = newPdfDoc.length;
+      const fileName = pdf_name.substring(0, pdf.length - 4) + "_page_" + i + ".pdf";
+      console.log("Saving file: " + pdf_name.substring(0, pdf.length - 4) + "_page_" + i + ".pdf");
+      let result = session.execute(
+        "insert into documents (file_name, file_size, file_type, file_content) values (:pdfname, :pdfsize,'application/pdf',:pdf)",
+        {
+          pdfname: { dir: oracledb.BIND_IN, val: filename, type: oracledb.STRING },
+          pdfsize: { dir: oracledb.BIND_IN, val: size, type: oracledb.NUMBER },
+          pdf: { dir: oracledb.BIND_IN, val: await newPdfDoc.save(), type: oracledb.UINT8ARRAY }
+        }
+      );
+      let rowsInserted = result.rowsAffected;
+      console.log("Rows Inserted: " + rowsInserted);
+    }
+  } catch (err) {
+    console.log("Error inside splitPDFIntoPages" + err);
+  }
+}
 export {
   extractPage,
   pdfPageCount,
-  pdfPageCountUnit8Array
+  pdfPageCountUnit8Array,
+  splitPDFIntoPages
 };
 /*! Bundled license information:
 
