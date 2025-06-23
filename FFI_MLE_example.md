@@ -26,7 +26,7 @@ const theAnswer = getTotalDocs();
 console.log('The total number of documents is: '+theAnswer);
 ```
 
-- Now lets create a more advanced example to show input and output variables. 
+- Now lets create a more advanced example to show input and output variables for a procedure. 
 ```
 create or replace procedure myStats(atBats IN number, hits IN number, walks_hbp IN number, sac IN number, battingAvg OUT number, onBasePercentage out number) is
 BEGIN
@@ -66,25 +66,17 @@ onBasePercentage: myOBP
 console.log('I am batting, ' + myAvg.val + ' with a on base percentage of '+ myOBP.val);
 ```
 
-- Create a procedure that inserts a row into your documents table. 
-
+- Now lets show how to call a package 
 ```
-create or replace procedure insertPDFPage (fileName documents.FILE_NAME%TYPE, fileSize documents.FILE_SIZE%TYPE, fileContent documents.FILE_CONTENT%TYPE) IS
-  PRAGMA AUTONOMOUS_TRANSACTION;
-  BEGIN
-  savepoint newDocInsert;
-  insert into documents (file_name, file_size, file_type, file_content) values (fileName, fileSize,'application/pdf',fileContent);
-  commit;
-  exception
-  when others then rollback to newDocInsert;
-  RAISE;
-END;
+const dbmsRandom = plsffi.resolvePackage('dbms_random');
+console.log(dbmsRandom.value(1,100));
 ```
 
-- MLE test insert all rows of document with session execute to table. 
+
+
+- MLE test insert all pages of document with session execute to table. 
 ```
 const {pdfPageCountUnit8Array} = await import('pdflib-module');
-const {extractPage} = await import('pdflib-module');
 const {splitPDFIntoPages} = await import('pdflib-module');
 
 //Lets query the document    
@@ -109,4 +101,9 @@ for (let row of result.rows) {
 select * from documents
 
 delete documents where ID  >= <add id>
+```
+
+- Now what if we wanted to do the same but leverage the DBMS_CLOUD.PUT_OBJECT to do the same into object storage. 
+```
+
 ```

@@ -19686,22 +19686,21 @@ async function splitPDFIntoPages(pdf, pdf_name) {
     globalThis.setTimeout = (functionRef, delay, ...args) => {
       functionRef.apply(null, args);
     };
-    console.log("Starting Split PDF");
     const pdfIn = await PDFDocument_default.load(pdf);
     for (let i = 0; i < pdfIn.getPageCount(); i++) {
-      console.log("Extracting Page:" + i);
       const newPdfDoc = await PDFDocument_default.create();
       const [currentPage] = await newPdfDoc.copyPages(pdfIn, [i]);
       newPdfDoc.addPage(currentPage);
-      const size = newPdfDoc.length;
-      const fileName = pdf_name.substring(0, pdf.length - 4) + "_page_" + i + ".pdf";
-      console.log("Saving file: " + pdf_name.substring(0, pdf.length - 4) + "_page_" + i + ".pdf");
+      const pdfBytes = await newPdfDoc.save();
+      const size = pdfBytes.length;
+      const fileName = pdf_name.substring(0, pdf_name.length - 4) + "_page_" + i + ".pdf";
+      console.log("Saving file: " + fileName + " Size: " + size);
       let result = session.execute(
         "insert into documents (file_name, file_size, file_type, file_content) values (:pdfname, :pdfsize,'application/pdf',:pdf)",
         {
-          pdfname: { dir: oracledb.BIND_IN, val: filename, type: oracledb.STRING },
+          pdfname: { dir: oracledb.BIND_IN, val: fileName, type: oracledb.STRING },
           pdfsize: { dir: oracledb.BIND_IN, val: size, type: oracledb.NUMBER },
-          pdf: { dir: oracledb.BIND_IN, val: await newPdfDoc.save(), type: oracledb.UINT8ARRAY }
+          pdf: { dir: oracledb.BIND_IN, val: pdfBytes, type: oracledb.UINT8ARRAY }
         }
       );
       let rowsInserted = result.rowsAffected;
@@ -19711,11 +19710,37 @@ async function splitPDFIntoPages(pdf, pdf_name) {
     console.log("Error inside splitPDFIntoPages" + err);
   }
 }
+async function splitPDFIntoPagesObjStorage(pdf, pdf_name, credName, objPath) {
+  const savePageObj = plsffi.resolvePackage("DBMS_CLOUD.PUT_OBJECT");
+  try {
+    globalThis.setTimeout = (functionRef, delay, ...args) => {
+      functionRef.apply(null, args);
+    };
+    const pdfIn = await PDFDocument_default.load(pdf);
+    for (let i = 0; i < pdfIn.getPageCount(); i++) {
+      const newPdfDoc = await PDFDocument_default.create();
+      const [currentPage] = await newPdfDoc.copyPages(pdfIn, [i]);
+      newPdfDoc.addPage(currentPage);
+      const pdfBytes = await newPdfDoc.save();
+      const fileName = pdf_name.substring(0, pdf_name.length - 4) + "_page_" + i + ".pdf";
+      console.log("Saving file: " + fileName);
+      savePageObj({
+        credential_name: credName,
+        object_uri: objPath,
+        contents: pdfBytes,
+        file_name: fileName
+      });
+    }
+  } catch (err) {
+    console.log("Error inside splitPDFIntoPages" + err);
+  }
+}
 export {
   extractPage,
   pdfPageCount,
   pdfPageCountUnit8Array,
-  splitPDFIntoPages
+  splitPDFIntoPages,
+  splitPDFIntoPagesObjStorage
 };
 /*! Bundled license information:
 

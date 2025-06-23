@@ -117,9 +117,9 @@ export async function splitPDFIntoPages(pdf, pdf_name) {
       functionRef.apply(null, args);
     };
     //console.log("Starting Split PDF");
-    const pdfIn = await PDFDocument_default.load(pdf);
+    const pdfIn = await PDFDocument.load(pdf);
     for (let i = 0; i < pdfIn.getPageCount(); i++) {
-      const newPdfDoc = await PDFDocument_default.create();
+      const newPdfDoc = await PDFDocument.create();
       const [currentPage] = await newPdfDoc.copyPages(pdfIn, [i]);
       newPdfDoc.addPage(currentPage);
       const pdfBytes = await newPdfDoc.save();
@@ -137,6 +137,37 @@ export async function splitPDFIntoPages(pdf, pdf_name) {
       );
       let rowsInserted = result.rowsAffected;
       console.log("Rows Inserted: " + rowsInserted);
+    }
+  } catch (err) {
+    console.log("Error inside splitPDFIntoPages" + err);
+  }
+}
+
+export async function splitPDFIntoPagesObjStorage(pdf, pdf_name, credName, objPath) {
+  //Reference the package.procedure
+  const savePageObj = plsffi.resolvePackage('DBMS_CLOUD.PUT_OBJECT');
+  try {
+    globalThis.setTimeout = (functionRef, delay, ...args) => {
+      functionRef.apply(null, args);
+    };
+
+    //console.log("Starting Split PDF");
+    const pdfIn = await PDFDocument.load(pdf);
+    for (let i = 0; i < pdfIn.getPageCount(); i++) {
+      const newPdfDoc = await PDFDocument.create();
+      const [currentPage] = await newPdfDoc.copyPages(pdfIn, [i]);
+      newPdfDoc.addPage(currentPage);
+      const pdfBytes = await newPdfDoc.save();
+      const fileName = pdf_name.substring(0, pdf_name.length - 4) + "_page_" + i + ".pdf";
+      console.log("Saving file: " + fileName);
+      
+      savePageObj({
+        credential_name: credName,
+        object_uri: objPath,
+        contents: pdfBytes,
+        file_name: fileName 
+      });  
+
     }
   } catch (err) {
     console.log("Error inside splitPDFIntoPages" + err);
